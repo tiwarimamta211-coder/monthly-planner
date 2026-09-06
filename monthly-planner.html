@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monthly Planner AI | IncomeAIHub by M.Dev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d10;
+    --bg-elev:#12151a;
+    --bg-card:#161a20;
+    --border:#242a32;
+    --gold:#d4af37;
+    --gold-soft:rgba(212,175,55,.15);
+    --emerald:#2dd4a7;
+    --emerald-soft:rgba(45,212,167,.15);
+    --violet:#a78bfa;
+    --violet-soft:rgba(167,139,250,.15);
+    --text:#f2f0ea;
+    --text-dim:#9aa0a8;
+    --text-faint:#5f6570;
+    --danger:#ef6f6f;
+    --radius:14px;
+    --radius-sm:8px;
+    --shadow:0 8px 30px rgba(0,0,0,.35);
+    --font-head:'Syne',sans-serif;
+    --font-body:'DM Sans',sans-serif;
+    --font-mono:'DM Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.5;}
+  h1,h2,h3,h4{font-family:var(--font-head);margin:0;}
+  button{font-family:var(--font-body);cursor:pointer;}
+  input,textarea,select{font-family:var(--font-body);}
+
+  /* ===== Top bar ===== */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 24px;border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,var(--bg-elev),var(--bg));
+    position:sticky;top:0;z-index:50;flex-wrap:wrap;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-badge{
+    width:36px;height:36px;border-radius:10px;
+    background:linear-gradient(135deg,var(--gold),var(--emerald));
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-head);font-weight:800;color:#0b0d10;font-size:16px;
+  }
+  .brand-text h1{font-size:16px;letter-spacing:.3px;}
+  .brand-text span{font-size:11px;color:var(--text-faint);font-family:var(--font-mono);}
+  .top-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn{
+    padding:9px 14px;border-radius:10px;border:1px solid var(--border);
+    background:var(--bg-card);color:var(--text);font-size:13px;font-weight:600;
+    display:inline-flex;align-items:center;gap:6px;transition:.15s;
+  }
+  .btn:hover{border-color:var(--gold);color:var(--gold);}
+  .btn-primary{background:linear-gradient(135deg,var(--gold),#b8932c);color:#0b0d10;border:none;}
+  .btn-primary:hover{filter:brightness(1.08);color:#0b0d10;}
+  .btn-emerald{background:linear-gradient(135deg,var(--emerald),#1f9c7c);color:#06110d;border:none;}
+  .btn-emerald:hover{filter:brightness(1.08);color:#06110d;}
+  .btn-ghost{background:transparent;}
+
+  /* ===== Layout ===== */
+  .wrap{max-width:1400px;margin:0 auto;padding:22px;}
+  .month-header{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:18px;flex-wrap:wrap;gap:12px;
+  }
+  .month-nav{display:flex;align-items:center;gap:10px;}
+  .month-nav h2{font-size:26px;}
+  .nav-btn{
+    width:36px;height:36px;border-radius:50%;border:1px solid var(--border);
+    background:var(--bg-card);color:var(--text);display:flex;align-items:center;
+    justify-content:center;font-size:16px;
+  }
+  .nav-btn:hover{border-color:var(--emerald);color:var(--emerald);}
+
+  .grid-main{display:grid;grid-template-columns:2.1fr 1fr;gap:20px;align-items:start;}
+  @media(max-width:1000px){.grid-main{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px;box-shadow:var(--shadow);margin-bottom:20px;
+  }
+  .card h3{font-size:15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .tag{font-family:var(--font-mono);font-size:10px;padding:2px 8px;border-radius:20px;background:var(--gold-soft);color:var(--gold);}
+
+  /* ===== Calendar ===== */
+  .calendar{width:100%;border-collapse:separate;border-spacing:6px;}
+  .cal-weekday{
+    text-align:center;font-size:11px;color:var(--text-faint);
+    font-family:var(--font-mono);padding-bottom:6px;text-transform:uppercase;
+  }
+  .cal-cell{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;
+    min-height:84px;vertical-align:top;padding:6px;cursor:pointer;transition:.15s;position:relative;
+  }
+  .cal-cell:hover{border-color:var(--emerald);}
+  .cal-cell.empty{background:transparent;border:none;cursor:default;}
+  .cal-cell.today{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;}
+  .cal-date{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);}
+  .cal-cell.today .cal-date{color:var(--gold);font-weight:700;}
+  .cal-dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;}
+  .dot{width:6px;height:6px;border-radius:50%;}
+  .dot.work{background:var(--violet);}
+  .dot.personal{background:var(--emerald);}
+  .dot.finance{background:var(--gold);}
+  .dot.health{background:var(--danger);}
+  .cal-count{
+    position:absolute;bottom:4px;right:6px;font-family:var(--font-mono);
+    font-size:9px;color:var(--text-faint);
+  }
+  @media(max-width:640px){
+    .cal-cell{min-height:56px;padding:4px;}
+    .calendar{border-spacing:3px;}
+  }
+
+  /* ===== Progress ring / bars ===== */
+  .progress-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .progress-label{flex:1;font-size:13px;}
+  .progress-track{flex:2;height:8px;background:var(--bg-elev);border-radius:20px;overflow:hidden;border:1px solid var(--border);}
+  .progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--emerald),var(--gold));transition:width .4s;}
+  .progress-pct{width:38px;text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--text-dim);}
+
+  .stat-row{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+  .stat-box{
+    flex:1;min-width:100px;background:var(--bg-elev);border:1px solid var(--border);
+    border-radius:10px;padding:12px;text-align:center;
+  }
+  .stat-box .num{font-family:var(--font-head);font-size:22px;color:var(--gold);}
+  .stat-box .lbl{font-size:11px;color:var(--text-faint);}
+
+  /* ===== Goals ===== */
+  .goal-item, .task-item{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;
+    padding:10px 12px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;
+  }
+  .goal-item.done, .task-item.done{opacity:.5;}
+  .goal-item.done .goal-text, .task-item.done .task-text{text-decoration:line-through;}
+  .check{
+    width:20px;height:20px;border-radius:6px;border:2px solid var(--border);
+    flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;
+    font-size:12px;color:var(--emerald);
+  }
+  .check.checked{background:var(--emerald-soft);border-color:var(--emerald);}
+  .item-body{flex:1;min-width:0;}
+  .goal-text,.task-text{font-size:13.5px;word-break:break-word;}
+  .item-meta{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+  .meta-chip{font-family:var(--font-mono);font-size:9.5px;padding:2px 7px;border-radius:20px;}
+  .chip-work{background:var(--violet-soft);color:var(--violet);}
+  .chip-personal{background:var(--emerald-soft);color:var(--emerald);}
+  .chip-finance{background:var(--gold-soft);color:var(--gold);}
+  .chip-health{background:rgba(239,111,111,.15);color:var(--danger);}
+  .chip-high{background:rgba(239,111,111,.15);color:var(--danger);}
+  .chip-medium{background:rgba(212,175,55,.15);color:var(--gold);}
+  .chip-low{background:rgba(45,212,167,.15);color:var(--emerald);}
+  .del-btn{
+    background:none;border:none;color:var(--text-faint);font-size:16px;
+    padding:0 4px;flex-shrink:0;
+  }
+  .del-btn:hover{color:var(--danger);}
+
+  .add-form{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .add-form input[type=text], .add-form textarea{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;
+    padding:9px 11px;color:var(--text);font-size:13px;width:100%;
+  }
+  .add-form textarea{resize:vertical;min-height:70px;}
+  .form-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .form-row select{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;
+    padding:8px 10px;color:var(--text);font-size:12px;flex:1;min-width:100px;
+  }
+  .form-row input[type=date]{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;
+    padding:8px 10px;color:var(--text);font-size:12px;flex:1;min-width:120px;
+  }
+
+  .filter-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+  .filter-chip{
+    padding:5px 12px;border-radius:20px;border:1px solid var(--border);
+    background:var(--bg-elev);font-size:11.5px;color:var(--text-dim);
+  }
+  .filter-chip.active{border-color:var(--gold);color:var(--gold);background:var(--gold-soft);}
+
+  .empty-msg{text-align:center;color:var(--text-faint);font-size:12.5px;padding:16px 0;}
+
+  /* Notes */
+  #notesArea{
+    width:100%;min-height:140px;background:var(--bg-elev);border:1px solid var(--border);
+    border-radius:10px;padding:12px;color:var(--text);font-size:13px;resize:vertical;
+  }
+
+  /* Modal */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+    z-index:100;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+    max-width:560px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;
+  }
+  .modal-box h3{font-size:18px;margin-bottom:14px;color:var(--gold);}
+  .modal-box h4{font-size:14px;margin:14px 0 6px;color:var(--emerald);}
+  .modal-box p, .modal-box li{font-size:13.5px;color:var(--text-dim);}
+  .modal-close{float:right;background:none;border:none;color:var(--text-faint);font-size:22px;}
+
+  /* Day detail modal list */
+  .day-modal-list .task-item{background:var(--bg);}
+
+  /* Ad placeholder */
+  .ad-slot{
+    border:1px dashed var(--border);border-radius:10px;padding:14px;text-align:center;
+    color:var(--text-faint);font-size:11px;font-family:var(--font-mono);margin-bottom:20px;
+  }
+
+  .footer-note{text-align:center;color:var(--text-faint);font-size:11px;margin:30px 0 10px;font-family:var(--font-mono);}
+
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-badge">M</div>
+    <div class="brand-text">
+      <h1>Monthly Planner AI</h1>
+      <span>IncomeAIHub by M.Dev</span>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="btn" onclick="openGuide()">📘 Hindi Guide</button>
+    <button class="btn" onclick="exportData()">⬇ Export</button>
+    <button class="btn" onclick="document.getElementById('importFile').click()">⬆ Import</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn" onclick="window.print()">🖨 Print</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="ad-slot">AD SPACE — 728x90 (AdSense placeholder)</div>
+
+  <div class="month-header">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+      <h2 id="monthTitle">Month Year</h2>
+      <button class="nav-btn" onclick="changeMonth(1)">›</button>
+    </div>
+    <button class="btn btn-primary" onclick="goToToday()">📍 Today</button>
+  </div>
+
+  <div class="stat-row" id="statRow"></div>
+
+  <div class="grid-main">
+    <!-- LEFT: Calendar -->
+    <div>
+      <div class="card">
+        <h3>📅 Calendar View <span class="tag" id="calMonthTag"></span></h3>
+        <table class="calendar" id="calendarTable"></table>
+      </div>
+
+      <div class="card">
+        <h3>🎯 Monthly Goals</h3>
+        <div id="goalsList"></div>
+        <div class="add-form">
+          <input type="text" id="goalInput" placeholder="Naya goal likhein... (e.g. 3 naye clients lena)">
+          <button class="btn btn-emerald" onclick="addGoal()">+ Goal Add Karein</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Sidebar -->
+    <div>
+      <div class="card">
+        <h3>✅ Task List</h3>
+        <div class="filter-bar" id="filterBar"></div>
+        <div id="tasksList"></div>
+        <div class="add-form">
+          <input type="text" id="taskInput" placeholder="Naya task likhein...">
+          <div class="form-row">
+            <select id="taskCategory">
+              <option value="work">Work</option>
+              <option value="personal">Personal</option>
+              <option value="finance">Finance</option>
+              <option value="health">Health</option>
+            </select>
+            <select id="taskPriority">
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <input type="date" id="taskDate">
+          </div>
+          <button class="btn btn-primary" onclick="addTask()">+ Task Add Karein</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📊 Progress Overview</h3>
+        <div class="progress-row">
+          <div class="progress-label">Tasks Complete</div>
+          <div class="progress-track"><div class="progress-fill" id="taskProgFill"></div></div>
+          <div class="progress-pct" id="taskProgPct">0%</div>
+        </div>
+        <div class="progress-row">
+          <div class="progress-label">Goals Complete</div>
+          <div class="progress-track"><div class="progress-fill" id="goalProgFill"></div></div>
+          <div class="progress-pct" id="goalProgPct">0%</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🗒 Notes</h3>
+        <textarea id="notesArea" placeholder="Is mahine ke important notes, ideas, reminders yahan likhein..." oninput="saveNotes()"></textarea>
+      </div>
+
+      <div class="ad-slot">AD SPACE — 300x250 (AdSense placeholder)</div>
+    </div>
+  </div>
+
+  <div class="footer-note">© IncomeAIHub by M.Dev — Data aapke browser me hi save hota hai (localStorage), kahin bhejaa nahi jaata.</div>
+</div>
+
+<!-- Day Detail Modal -->
+<div class="modal-overlay" id="dayModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeDayModal()">&times;</button>
+    <h3 id="dayModalTitle">Date</h3>
+    <div id="dayModalTasks" class="day-modal-list"></div>
+  </div>
+</div>
+
+<!-- Hindi Guide Modal -->
+<div class="modal-overlay" id="guideModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeGuide()">&times;</button>
+    <h3>📘 Monthly Planner — Hindi Guide</h3>
+    <p>Yeh tool aapko poore mahine ki planning ek jagah karne me madad karta hai — bina kisi login ya internet connection ke. Sab data sirf aapke browser me save hota hai.</p>
+    <h4>1. Calendar Kaise Use Karein</h4>
+    <p>Kisi bhi date par click karke us din ke saare tasks dekh sakte hain. Har category ka alag color-dot dikhta hai — Work (violet), Personal (green), Finance (gold), Health (red).</p>
+    <h4>2. Tasks Add Karna</h4>
+    <p>Right side me task likhein, category aur priority choose karein, date select karein aur "Task Add Karein" dabayein. Checkbox par click karke task complete mark kar sakte hain.</p>
+    <h4>3. Monthly Goals</h4>
+    <p>Bade goals (jaise "5 naye clients lena" ya "₹50,000 revenue") set karein aur unhe complete hone par tick karein.</p>
+    <h4>4. Progress Track Karna</h4>
+    <p>Progress Overview section me dikhega ki aapne kitne % tasks aur goals complete kiye hain — motivation ke liye.</p>
+    <h4>5. Notes</h4>
+    <p>Koi bhi important reminder ya idea Notes box me likh dein, wo automatically save ho jaayega.</p>
+    <h4>6. Export/Import & Print</h4>
+    <p>Export button se apna data JSON file me backup le sakte hain, Import se wapas load kar sakte hain, aur Print se pura planner print/PDF kar sakte hain.</p>
+    <h4>💰 Freelancing Tip</h4>
+    <p>Is tool ko apne CA firm clients ya local business owners ko free deke unhe premium version (reminders, WhatsApp sync, team sharing) ka upsell karein — Fiverr/Upwork par "Monthly Business Planner Setup" gig bana kar bhi sell kar sakte hain.</p>
+  </div>
+</div>
+
+<script>
+/* ===================== STATE ===================== */
+let current = new Date();
+current.setDate(1);
+let selectedFilter = 'all';
+
+function storageKey(){
+  return `planner_${current.getFullYear()}_${current.getMonth()}`;
+}
+function loadMonthData(){
+  const raw = localStorage.getItem(storageKey());
+  if(raw){
+    try{ return JSON.parse(raw); }catch(e){}
+  }
+  return {tasks:[], goals:[], notes:''};
+}
+function saveMonthData(data){
+  localStorage.setItem(storageKey(), JSON.stringify(data));
+}
+let monthData = loadMonthData();
+
+/* ===================== RENDER: HEADER ===================== */
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function renderHeader(){
+  document.getElementById('monthTitle').textContent = `${monthNames[current.getMonth()]} ${current.getFullYear()}`;
+  document.getElementById('calMonthTag').textContent = `${monthData.tasks.length} tasks`;
+}
+
+/* ===================== RENDER: CALENDAR ===================== */
+function renderCalendar(){
+  const table = document.getElementById('calendarTable');
+  table.innerHTML = '';
+  const weekdays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const headRow = document.createElement('tr');
+  weekdays.forEach(d=>{
+    const th = document.createElement('td');
+    th.className='cal-weekday';
+    th.textContent=d;
+    headRow.appendChild(th);
+  });
+  table.appendChild(headRow);
+
+  const year = current.getFullYear();
+  const month = current.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  let day = 1;
+  for(let row=0; row<6; row++){
+    const tr = document.createElement('tr');
+    let rowHasDay = false;
+    for(let col=0; col<7; col++){
+      const td = document.createElement('td');
+      if((row===0 && col<firstDay) || day>daysInMonth){
+        td.className='cal-cell empty';
+      } else {
+        rowHasDay = true;
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        td.className='cal-cell' + (dateStr===todayStr ? ' today' : '');
+        td.onclick = ()=>openDayModal(dateStr);
+        const dayTasks = monthData.tasks.filter(t=>t.date===dateStr);
+        const dotsHtml = [...new Set(dayTasks.map(t=>t.category))]
+          .map(cat=>`<span class="dot ${cat}"></span>`).join('');
+        td.innerHTML = `<div class="cal-date">${day}</div><div class="cal-dots">${dotsHtml}</div>` +
+          (dayTasks.length ? `<div class="cal-count">${dayTasks.length}</div>` : '');
+        day++;
+      }
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+    if(!rowHasDay && row>0) break;
+    if(day>daysInMonth && row>=3) { table.appendChild(tr); break; }
+  }
+}
+
+/* ===================== DAY MODAL ===================== */
+function openDayModal(dateStr){
+  document.getElementById('dayModal').classList.add('open');
+  const d = new Date(dateStr+'T00:00:00');
+  document.getElementById('dayModalTitle').textContent = d.toLocaleDateString('en-IN',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const tasks = monthData.tasks.filter(t=>t.date===dateStr);
+  const container = document.getElementById('dayModalTasks');
+  if(tasks.length===0){
+    container.innerHTML = `<p class="empty-msg">Is din koi task nahi hai.</p>`;
+    return;
+  }
+  container.innerHTML = tasks.map(t=>`
+    <div class="task-item ${t.done?'done':''}">
+      <div class="check ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+      <div class="item-body">
+        <div class="task-text">${escapeHtml(t.text)}</div>
+        <div class="item-meta">
+          <span class="meta-chip chip-${t.category}">${t.category}</span>
+          <span class="meta-chip chip-${t.priority}">${t.priority}</span>
+        </div>
+      </div>
+      <button class="del-btn" onclick="deleteTask('${t.id}')">✕</button>
+    </div>
+  `).join('');
+}
+function closeDayModal(){ document.getElementById('dayModal').classList.remove('open'); }
+
+/* ===================== TASKS ===================== */
+function renderFilterBar(){
+  const cats = ['all','work','personal','finance','health'];
+  const bar = document.getElementById('filterBar');
+  bar.innerHTML = cats.map(c=>`<button class="filter-chip ${selectedFilter===c?'active':''}" onclick="setFilter('${c}')">${c==='all'?'Sab':c}</button>`).join('');
+}
+function setFilter(cat){ selectedFilter = cat; renderAll(); }
+
+function renderTasks(){
+  const list = document.getElementById('tasksList');
+  let tasks = [...monthData.tasks].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if(selectedFilter!=='all'){
+    tasks = tasks.filter(t=>t.category===selectedFilter);
+  }
+  if(tasks.length===0){
+    list.innerHTML = `<p class="empty-msg">Koi task nahi mila. Neeche se add karein.</p>`;
+    return;
+  }
+  list.innerHTML = tasks.map(t=>`
+    <div class="task-item ${t.done?'done':''}">
+      <div class="check ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+      <div class="item-body">
+        <div class="task-text">${escapeHtml(t.text)}</div>
+        <div class="item-meta">
+          <span class="meta-chip chip-${t.category}">${t.category}</span>
+          <span class="meta-chip chip-${t.priority}">${t.priority}</span>
+          ${t.date ? `<span class="meta-chip" style="background:var(--bg);color:var(--text-faint);">${formatDateShort(t.date)}</span>` : ''}
+        </div>
+      </div>
+      <button class="del-btn" onclick="deleteTask('${t.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function addTask(){
+  const input = document.getElementById('taskInput');
+  const text = input.value.trim();
+  if(!text) return;
+  const category = document.getElementById('taskCategory').value;
+  const priority = document.getElementById('taskPriority').value;
+  const date = document.getElementById('taskDate').value;
+  monthData.tasks.push({id:uid(), text, category, priority, date, done:false});
+  input.value='';
+  document.getElementById('taskDate').value='';
+  persistAndRender();
+}
+function toggleTask(id){
+  const t = monthData.tasks.find(t=>t.id===id);
+  if(t){ t.done = !t.done; persistAndRender(); if(document.getElementById('dayModal').classList.contains('open')){ openDayModal(t.date); } }
+}
+function deleteTask(id){
+  monthData.tasks = monthData.tasks.filter(t=>t.id!==id);
+  persistAndRender();
+  if(document.getElementById('dayModal').classList.contains('open')){
+    document.getElementById('dayModalTasks').innerHTML = monthData.tasks.length ? '' : `<p class="empty-msg">Is din koi task nahi hai.</p>`;
+    renderAll();
+  }
+}
+
+/* ===================== GOALS ===================== */
+function renderGoals(){
+  const list = document.getElementById('goalsList');
+  if(monthData.goals.length===0){
+    list.innerHTML = `<p class="empty-msg">Koi goal set nahi hai. Neeche se add karein.</p>`;
+    return;
+  }
+  list.innerHTML = monthData.goals.map(g=>`
+    <div class="goal-item ${g.done?'done':''}">
+      <div class="check ${g.done?'checked':''}" onclick="toggleGoal('${g.id}')">${g.done?'✓':''}</div>
+      <div class="item-body"><div class="goal-text">${escapeHtml(g.text)}</div></div>
+      <button class="del-btn" onclick="deleteGoal('${g.id}')">✕</button>
+    </div>
+  `).join('');
+}
+function addGoal(){
+  const input = document.getElementById('goalInput');
+  const text = input.value.trim();
+  if(!text) return;
+  monthData.goals.push({id:uid(), text, done:false});
+  input.value='';
+  persistAndRender();
+}
+function toggleGoal(id){
+  const g = monthData.goals.find(g=>g.id===id);
+  if(g){ g.done=!g.done; persistAndRender(); }
+}
+function deleteGoal(id){
+  monthData.goals = monthData.goals.filter(g=>g.id!==id);
+  persistAndRender();
+}
+
+/* ===================== NOTES ===================== */
+function renderNotes(){
+  document.getElementById('notesArea').value = monthData.notes || '';
+}
+function saveNotes(){
+  monthData.notes = document.getElementById('notesArea').value;
+  saveMonthData(monthData);
+}
+
+/* ===================== STATS ===================== */
+function renderStats(){
+  const totalTasks = monthData.tasks.length;
+  const doneTasks = monthData.tasks.filter(t=>t.done).length;
+  const totalGoals = monthData.goals.length;
+  const doneGoals = monthData.goals.filter(g=>g.done).length;
+  const pending = totalTasks - doneTasks;
+
+  document.getElementById('statRow').innerHTML = `
+    <div class="stat-box"><div class="num">${totalTasks}</div><div class="lbl">Total Tasks</div></div>
+    <div class="stat-box"><div class="num">${doneTasks}</div><div class="lbl">Completed</div></div>
+    <div class="stat-box"><div class="num">${pending}</div><div class="lbl">Pending</div></div>
+    <div class="stat-box"><div class="num">${doneGoals}/${totalGoals}</div><div class="lbl">Goals Done</div></div>
+  `;
+
+  const taskPct = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
+  const goalPct = totalGoals ? Math.round((doneGoals/totalGoals)*100) : 0;
+  document.getElementById('taskProgFill').style.width = taskPct+'%';
+  document.getElementById('taskProgPct').textContent = taskPct+'%';
+  document.getElementById('goalProgFill').style.width = goalPct+'%';
+  document.getElementById('goalProgPct').textContent = goalPct+'%';
+}
+
+/* ===================== HELPERS ===================== */
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+function formatDateShort(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  return d.toLocaleDateString('en-IN',{day:'numeric', month:'short'});
+}
+function persistAndRender(){
+  saveMonthData(monthData);
+  renderAll();
+}
+function renderAll(){
+  renderHeader();
+  renderCalendar();
+  renderFilterBar();
+  renderTasks();
+  renderGoals();
+  renderNotes();
+  renderStats();
+}
+
+/* ===================== MONTH NAV ===================== */
+function changeMonth(delta){
+  current.setMonth(current.getMonth()+delta);
+  monthData = loadMonthData();
+  renderAll();
+}
+function goToToday(){
+  current = new Date();
+  current.setDate(1);
+  monthData = loadMonthData();
+  renderAll();
+}
+
+/* ===================== EXPORT / IMPORT ===================== */
+function exportData(){
+  const allData = {};
+  for(let i=0;i<localStorage.length;i++){
+    const key = localStorage.key(i);
+    if(key.startsWith('planner_')){
+      allData[key] = JSON.parse(localStorage.getItem(key));
+    }
+  }
+  const blob = new Blob([JSON.stringify(allData,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `monthly-planner-backup-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = JSON.parse(e.target.result);
+      Object.keys(data).forEach(key=>{
+        if(key.startsWith('planner_')){
+          localStorage.setItem(key, JSON.stringify(data[key]));
+        }
+      });
+      monthData = loadMonthData();
+      renderAll();
+      alert('Data successfully import ho gaya!');
+    }catch(err){
+      alert('Import fail hua — file valid JSON nahi hai.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+/* ===================== MODALS ===================== */
+function openGuide(){ document.getElementById('guideModal').classList.add('open'); }
+function closeGuide(){ document.getElementById('guideModal').classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click', e=>{
+    if(e.target===overlay) overlay.classList.remove('open');
+  });
+});
+
+/* Enter key support */
+document.getElementById('goalInput').addEventListener('keypress', e=>{ if(e.key==='Enter') addGoal(); });
+document.getElementById('taskInput').addEventListener('keypress', e=>{ if(e.key==='Enter') addTask(); });
+
+/* ===================== INIT ===================== */
+renderAll();
+</script>
+</body>
+</html>
